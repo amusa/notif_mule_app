@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:core="http://www.mulesoft.org/schema/mule/core"
+	version="EE-3.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+
+
+	<jms:activemq-connector name="Active_MQ" 
+		username="${activemq.user}" password="${activemq.password}" brokerURL="${activemq.brokerURL}"
+		validateConnections="true" doc:name="Active MQ" />
+
+
+	<flow name="SubscribtionFlow" doc:name="SubscribtionFlow">
+		<http:inbound-endpoint exchange-pattern="request-response"
+			host="localhost" port="8081" path="Notification/subscribe" doc:name="HTTP" />
+		 <http:body-to-parameter-map-transformer
+			doc:name="Body to Parameter Map" /> 
+
+
+		<expression-component doc:name="create subscription request">
+			import edu.rit.notification.model.EnrollmentRequest;
+				
+			payload = new EnrollmentRequest(payload['uid'], payload['classnumber']);
+			
+		</expression-component>
+        <async doc:name="Async">
+            <jms:outbound-endpoint queue="temp.sub" connector-ref="Active_MQ" doc:name="JMS"/>
+        </async>
+        <echo-component doc:name="Echo"/>
+		
+		<!-- <custom-transformer class="edu.rit.notification.transformers.StringToSubscriptionRequest" doc:name="Java"/> -->
+		<set-payload value="Your request will be processed shortly"
+			doc:name="Set Payload" />
+
+	</flow>
+
+	
+</mule>

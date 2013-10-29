@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ajax="http://www.mulesoft.org/schema/mule/ajax"
+	xmlns:quartz="http://www.mulesoft.org/schema/mule/quartz"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:axis="http://www.mulesoft.org/schema/mule/axis" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.4.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ajax http://www.mulesoft.org/schema/mule/ajax/current/mule-ajax.xsd 
+http://www.mulesoft.org/schema/mule/quartz http://www.mulesoft.org/schema/mule/quartz/current/mule-quartz.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/axis http://www.mulesoft.org/schema/mule/axis/current/mule-axis.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+
+	<quartz:connector name="Quartz" validateConnections="true"
+		doc:name="Quartz" />
+
+	<spring:beans>
+		<spring:import resource="classpath:spring-config.xml" />
+		<spring:bean class="edu.rit.notification.poller.MyJob" id="myJob" />
+	</spring:beans>
+
+	<queued-asynchronous-processing-strategy
+		name="allow10Threads" maxThreads="10"
+		doc:name="Queued Asynchronous Processing Strategy" />
+	<flow name="OnceADayPollingFlow1" processingStrategy="allow10Threads"
+		doc:name="OnceADayPollingFlow1">
+		<poll frequency="86400000" doc:name="Poll">
+			<processor-chain doc:name="Processor Chain">
+				<cxf:jaxws-client
+					serviceClass="edu.rit.notification.service.StudentInformationService"
+					operation="getClassScheduleForToday" doc:name="SOAP" />
+				<http:outbound-endpoint host="${sis.host}"
+					port="${sis.port}" path="SIS/StudentInformationService" doc:name="HTTP" />
+			</processor-chain>
+		</poll>
+		<echo-component doc:name="Echo" />
+
+		<component doc:name="Java">
+			 <spring-object bean="oneHourPoller" />
+			<!-- <singleton-object class="edu.rit.notification.poller.OneHourPoller" /> -->
+			<binding interface="edu.rit.notification.binding.PollingLoopback"
+				method="putScheduleList">
+				<vm:outbound-endpoint path="onehourqueue"
+					doc:name="One 
+				Hour Queue" />
+			</binding>
+		</component>
+
+
+	</flow>
+
+	<flow name="StrollerService">
+		<quartz:inbound-endpoint repeatInterval="20000"
+			startDelay="3000" jobName="walkGenerator">
+			<quartz:event-generator-job />
+		</quartz:inbound-endpoint>
+		<component>
+			<entry-point-resolver-set>
+				
+				<method-entry-point-resolver acceptVoidMethods="true">
+					<include-entry-point method="poll" />
+				</method-entry-point-resolver>
+				<reflection-entry-point-resolver />
+			</entry-point-resolver-set>
+			<!-- <singleton-object class="edu.rit.notification.poller.OneHourPoller" /> -->
+			<spring-object bean="oneHourPoller" />
+			<binding interface="edu.rit.notification.binding.PollingLoopback"
+				method="putScheduleList">
+				<vm:outbound-endpoint path="onehourqueue"
+					doc:name="One 
+				Hour Queue" />
+			</binding>
+		</component>
+
+	</flow>
+	<flow name="EventProcessor">
+		<vm:inbound-endpoint path="onehourqueue" />
+		<echo-component doc:name="One hour queue arrival" />
+	</flow>
+
+	<!-- <flow name="test2Flow1" doc:name="test2Flow1"> <quartz:inbound-endpoint 
+		jobName="job1" repeatInterval="10000" responseTimeout="10000" connector-ref="Quartz" 
+		doc:name="Quartz"> <quartz:custom-job job-ref="myJob" /> </quartz:inbound-endpoint> 
+		<echo-component doc:name="One hour queue arrival" /> <vm:outbound-endpoint 
+		path="onehourqueue" doc:name="One Hour Queue" /> </flow> -->
+
+	<!-- <flow name="PerMinutePollingFlow" processingStrategy="allow10Threads" 
+		doc:name="PerMinutePollingFlow"> <jms:inbound-endpoint queue="onehourqueue" 
+		connector-ref="Active_MQ" doc:name="One Hour Queue" /> <echo-component doc:name="Echo" 
+		/> <component doc:name="Java"> <spring-object bean="perMinutePoller" /> <binding 
+		interface="edu.rit.notification.binding.PollingLoopback" method="putScheduleEvent"> 
+		<jms:outbound-endpoint queue="perminutequeue" connector-ref="Active_MQ" doc:name="Per 
+		Minute Queue" /> </binding> </component> </flow> -->
+
+</mule>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:core="http://www.mulesoft.org/schema/mule/core"
+	version="EE-3.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+
+
+	<!-- <spring:import resource="classpath:spring-config.xml" /> -->
+	<!-- <context:component-scan base-package="edu.rit.notification" /> -->
+
+	<!-- <spring:beans> <spring:bean id="subscription" class="edu.rit.notification.service.impl.SubscriptionImpl" 
+		/> <spring:bean id="studentInfoSys" class="edu.rit.notification.service.impl.StudentInfoSysImpl" 
+		/> </spring:beans> <spring:beans> <context:component-scan base-package="edu.rit.notification" 
+		/> <spring:import resource="classpath:spring-config.xml" /> <spring:import 
+		resource="classpath:hibernate-cfg.xml" /> </spring:beans> -->
+
+	<flow name="QueueToSIS" doc:name="QueueToSIS">
+
+		<jms:inbound-endpoint queue="temp.sub"
+			connector-ref="Active_MQ" doc:name="JMS" />
+		<echo-component doc:name="Echo" />
+
+		<!-- <collection-aggregator timeout="6000" failOnTimeout="false"/> -->
+
+		<!-- <processor-chain doc:name="Processor Chain"> <cxf:jaxws-client operation="subscribe" 
+			serviceClass="edu.rit.notification.service.StudentInfoSys" doc:name="subscribe" 
+			/> <http:outbound-endpoint host="localhost" port="18080" path="Notification/SISService" 
+			doc:name="HTTP" /> </processor-chain> -->
+
+		<processor-chain doc:name="Processor Chain">
+
+			<cxf:jaxws-client
+				serviceClass="edu.rit.notification.service.StudentInformationService"
+				operation="getEnrollement" doc:name="SOAP"/>
+			<http:outbound-endpoint
+				host="localhost" port="8080" path="SIS/StudentInformationService" doc:name="HTTP"/>
+		</processor-chain>
+		
+		<!-- <cxf:outbound-endpoint address="http://localhost:8080" wsdlLocation="http://localhost:8080/SIS/StudentInformationService?wsdl" 
+			wsdlPort="http://service.notification.rit.edu/StudentInformationServicePort" 
+			operation="getStudentEnrolled" /> -->
+
+		<logger message="Response: #[payload]" level="INFO" doc:name="Response" />
+	</flow>
+
+	<!-- SIS Service -->
+	<flow name="SISServiceFlow" doc:name="SISServiceFlow"
+		doc:description="
+			The Student Information System Service
+		">
+		<description>
+			The Student Information System Service
+		</description>
+
+		<http:inbound-endpoint
+			address="http://localhost:18080/Notification/SISService"
+			exchange-pattern="request-response" doc:name="HTTP" />
+		<cxf:jaxws-service
+			serviceClass="edu.rit.notification.service.impl.StudentInfoSysImpl"
+			doc:name="SOAP" />
+		<logger level="INFO" doc:name="Logger" />
+
+		<!-- <component doc:name="SIS"> <spring-object bean="studentInfoSys" /> 
+			</component> -->
+	</flow>
+
+</mule>
