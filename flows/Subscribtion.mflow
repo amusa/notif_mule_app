@@ -34,10 +34,11 @@
             <property name="jndiProviderProperties-ref"/>
         </properties>
     </global-element>
-    <flow SubFlow="false" name="SubscribtionFlow" entity-id="31d8eeec-4e70-4311-b2c5-8a8b1131fc49">
+    <flow SubFlow="false" name="SubscribtionFlow" entity-id="4e8decc2-8b25-4757-a782-5fdd6e5fe475">
         <properties>
             <property name="processingStrategy"/>
             <property name="processingStrategy2"/>
+            <property name="initialState"/>
             <property name="bussinessEventsLabel"/>
             <property name="auxiliary;index" value="2"/>
             <property name="tracking:enable-default-events"/>
@@ -83,63 +84,44 @@
                     <property name="mimeType"/>
                 </properties>
             </pattern>
-            <pattern name="create subscription request" type="http://www.mulesoft.org/schema/mule/core/expression-component" entity-id="Expression#1">
-                <graphicalData x="0" y="0" width="0" height="0"/>
-                <properties>
-                    <property name="expression" value="&#xA;&#x9;&#x9;&#x9;import edu.rit.notification.model.EnrollmentRequest;&#xA;&#x9;&#x9;&#x9;&#x9;&#xA;&#x9;&#x9;&#x9;payload = new EnrollmentRequest(payload['uid'], payload['classnumber']);&#xA;&#x9;&#x9;&#x9;&#xA;&#x9;&#x9;"/>
-                    <property name="file"/>
-                    <property name="evaluator"/>
-                    <property name="auxiliary;index" value="5"/>
-                </properties>
-            </pattern>
-            <scope name="Async" type="http://www.mulesoft.org/schema/mule/core/async" entity-id="Async#1">
-                <graphicalData x="0" y="0" width="0" height="0"/>
-                <properties>
-                    <property name="processingStrategy"/>
-                    <property name="auxiliary;index" value="6"/>
-                </properties>
-                <compartment entity-id="compartment#1">
-                    <lane hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="compartment-lane#2">
-                        <endpoint direction="Outbound" message-exchange-pattern="OneWay" name="JMS" type="http://www.mulesoft.org/schema/mule/jms/endpoint" entity-id="JMS#1">
-                            <graphicalData x="0" y="0" width="0" height="0"/>
-                            <properties>
-<property name="topic"/>
-<property name="queue" value="temp.sub"/>
-<property name="durableName"/>
-<property name="businessEventsLabel"/>
-<property name="disableTransportTransformer"/>
-<property name="disableTemporaryReplyToDestinations"/>
-<property name="exchange-pattern"/>
-<property name="tracking:enable-default-events"/>
-<property name="ref"/>
-<property name="transformer-refs"/>
-<property name="address"/>
-<property name="encoding"/>
-<property name="responseTransformer-refs"/>
-<property name="auxiliary;index" value="7"/>
-<property name="mimeType"/>
-<property name="responseTimeout"/>
-<property name="connector-ref" value="Active_MQ"/>
-                            </properties>
-                        </endpoint>
-                    </lane>
-                </compartment>
-            </scope>
             <pattern name="Echo" type="org.mule.tooling.ui.modules.core.pattern.echo" entity-id="Echo#1">
                 <graphicalData x="0" y="0" width="0" height="0"/>
                 <properties>
-                    <property name="auxiliary;index" value="8"/>
+                    <property name="auxiliary;index" value="5"/>
                 </properties>
             </pattern>
-            <pattern name="Set Payload" type="http://www.mulesoft.org/schema/mule/core/set-payload" entity-id="Set Payload#1">
+            <pattern name="create subscription request" type="http://www.mulesoft.org/schema/mule/core/expression-component" entity-id="Expression#1">
                 <graphicalData x="0" y="0" width="0" height="0"/>
                 <properties>
-                    <property name="value" value="Your request will be processed shortly"/>
-                    <property name="auxiliary;index" value="9"/>
+                    <property name="expression" value="&#xA;&#x9;&#x9;&#x9;import&#xA;&#x9;&#x9;&#x9;edu.rit.notification.model.SubscriptionRequest;&#xA;&#xA;&#x9;&#x9;&#x9;payload = new SubscriptionRequest(payload['uid'], payload['classnumber']);&#xA;&#xA;&#x9;&#x9;"/>
+                    <property name="file"/>
+                    <property name="evaluator"/>
+                    <property name="auxiliary;index" value="6"/>
                 </properties>
             </pattern>
+            <endpoint direction="Outbound" message-exchange-pattern="OneWay" name="JMS" type="http://www.mulesoft.org/schema/mule/jms/endpoint" entity-id="JMS#1">
+                <graphicalData x="0" y="0" width="0" height="0"/>
+                <properties>
+                    <property name="topic"/>
+                    <property name="queue" value="temp.sub"/>
+                    <property name="durableName"/>
+                    <property name="businessEventsLabel"/>
+                    <property name="disableTransportTransformer"/>
+                    <property name="disableTemporaryReplyToDestinations"/>
+                    <property name="exchange-pattern" value="request-response"/>
+                    <property name="tracking:enable-default-events"/>
+                    <property name="ref"/>
+                    <property name="transformer-refs"/>
+                    <property name="address"/>
+                    <property name="encoding"/>
+                    <property name="responseTransformer-refs"/>
+                    <property name="auxiliary;index" value="7"/>
+                    <property name="mimeType"/>
+                    <property name="responseTimeout"/>
+                    <property name="connector-ref" value="Active_MQ"/>
+                </properties>
+            </endpoint>
         </lane>
-        <apikit>false</apikit>
     </flow>
     <description></description>
 </mule-configuration>

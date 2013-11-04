@@ -62,8 +62,11 @@ public class OneHourPoller implements Pollable<ClassSchedule> {
 			System.out.println("match found...");
 			Entry<String, List<ClassSchedule>> entry = timeTable
 					.pollFirstEntry();
-			System.out.println("********FirstEntry: " + entry);
-			loopback.putScheduleList(entry.getValue());
+			List<ClassSchedule> classSchedule= entry.getValue();
+			
+			System.out.println("********FirstEntry: " + entry+ " sending size: " +classSchedule.size() );
+			
+			loopback.putScheduleList(classSchedule);
 		}
 
 		/*
