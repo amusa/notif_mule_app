@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.4.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+
+
+	<flow name="QueueToPublishFlow" doc:name="QueueToPublishFlow">
+		<jms:inbound-endpoint queue="subscription"
+			connector-ref="Active_MQ" doc:name="JMS" />
+        <echo-component doc:name="Echo"/>
+
+		<enricher source="#[payload]" target="#[flowVars['studentProfile']]"
+			doc:name="Enrich with studentProfile">
+			<flow-ref name="lookupStudentProfile" doc:name="lookupStudentProfile" />
+		</enricher>
+         
+        <logger level="INFO" doc:name="Logger"/>
+         <set-payload value="#[flowVars['studentProfile']]" doc:name="studentId" />
+         <echo-component doc:name="Echo"/>
+        <!-- <jms:outbound-endpoint topic="#[message.payload.getClassNumber()]" connector-ref="Active_MQ" doc:name="JMS"/> -->
+        <jms:outbound-endpoint topic="class.schedule" connector-ref="Active_MQ" doc:name="JMS"/>
+
+
+	</flow>
+
+	<sub-flow name="lookupStudentProfile" doc:name="lookupStudentProfile">
+		<set-payload value="#[payload.getStudentId()]" doc:name="studentId" />
+        <logger level="INFO" doc:name="Logger"/>
+
+		<processor-chain doc:name="Processor Chain">
+			<cxf:jaxws-client serviceClass="edu.rit.notification.service.StudentInfoSys"
+				operation="getStudentProfile" doc:name="getStudentProfile" />
+			<http:outbound-endpoint host="localhost" port="18080"
+				path="Notification/SISService" doc:name="HTTP" />
+		</processor-chain>
+
+		<logger level="INFO" message="Student profile: #[payload]"
+			doc:name="studentProfile" />
+	</sub-flow>
+
+	<!-- SIS SERVICES -->
+
+	<!-- <flow name="SISService" doc:name="SISService"
+		doc:description="
+			The Student Information System Service
+		">
+		<description>
+			The Student Information System Service
+		</description>
+
+		<http:inbound-endpoint
+			address="http://localhost:18080/Notification/SISService"
+			exchange-pattern="request-response" doc:name="HTTP" />
+		<cxf:jaxws-service
+			serviceClass="edu.rit.notification.service.impl.StudentInfoSysImpl"
+			doc:name="SOAP" />
+        <logger level="INFO" doc:name="Logger"/>
+			
+		<component doc:name="SIS">
+			<singleton-object
+				class="edu.rit.notification.service.impl.StudentInfoSysImpl" />
+		</component>
+	</flow> -->
+</mule>

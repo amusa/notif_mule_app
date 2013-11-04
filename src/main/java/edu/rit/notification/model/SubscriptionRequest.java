@@ -2,6 +2,10 @@ package edu.rit.notification.model;
 
 import java.io.Serializable;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+
+@XmlRootElement
 public class SubscriptionRequest extends Request implements Serializable{
 
 	/**
