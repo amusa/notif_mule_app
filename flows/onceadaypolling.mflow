@@ -55,10 +55,11 @@
             <property name="maxQueueSize"/>
         </properties>
     </global-element>
-    <flow SubFlow="false" name="OnceADayPollingFlow1" entity-id="4ff7b994-d845-4a81-aaa7-1da08641f5d0">
+    <flow SubFlow="false" name="OnceADayPollingFlow1" entity-id="8be6235c-9a52-4d5e-8155-8bb32e16a2a9">
         <properties>
             <property name="processingStrategy" value="allow10Threads"/>
             <property name="processingStrategy2" value="allow10Threads"/>
+            <property name="initialState"/>
             <property name="bussinessEventsLabel"/>
             <property name="auxiliary;index" value="6"/>
             <property name="tracking:enable-default-events"/>
@@ -150,12 +151,12 @@
                 </properties>
             </pattern>
         </lane>
-        <apikit>false</apikit>
     </flow>
-    <flow SubFlow="false" name="StrollerService" entity-id="28ab9e3d-0da2-454c-8b47-27dbdb880b50">
+    <flow SubFlow="false" name="StrollerService" entity-id="67528cbe-c523-487d-8609-820c8dab326e">
         <properties>
             <property name="processingStrategy"/>
             <property name="processingStrategy2"/>
+            <property name="initialState"/>
             <property name="bussinessEventsLabel"/>
             <property name="auxiliary;index" value="16"/>
             <property name="tracking:enable-default-events"/>
@@ -201,12 +202,12 @@
                 </properties>
             </pattern>
         </lane>
-        <apikit>false</apikit>
     </flow>
-    <flow SubFlow="false" name="EventProcessor" entity-id="cda36363-4b97-4112-a7f4-7e702269e285">
+    <flow SubFlow="false" name="EventProcessor" entity-id="e914667e-8028-4798-ad2f-3860a7404503">
         <properties>
             <property name="processingStrategy"/>
             <property name="processingStrategy2"/>
+            <property name="initialState"/>
             <property name="bussinessEventsLabel"/>
             <property name="auxiliary;index" value="27"/>
             <property name="tracking:enable-default-events"/>
@@ -238,8 +239,92 @@
                     <property name="auxiliary;index" value="29"/>
                 </properties>
             </pattern>
+            <pattern name="Logger" type="http://www.mulesoft.org/schema/mule/core/logger" entity-id="Logger#1">
+                <graphicalData x="0" y="0" width="0" height="0"/>
+                <properties>
+                    <property name="message"/>
+                    <property name="category"/>
+                    <property name="level" value="INFO"/>
+                    <property name="auxiliary;index" value="30"/>
+                </properties>
+            </pattern>
+            <scope name="For Each" type="http://www.mulesoft.org/schema/mule/core/foreach" entity-id="For Each#1">
+                <graphicalData x="0" y="0" width="0" height="0"/>
+                <properties>
+                    <property name="counterVariableName"/>
+                    <property name="rootMessageVariableName"/>
+                    <property name="batchSize"/>
+                    <property name="collection"/>
+                    <property name="auxiliary;index" value="31"/>
+                </properties>
+                <compartment entity-id="compartment#3">
+                    <lane hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="compartment-lane#6">
+                        <pattern name="Set Payload" type="http://www.mulesoft.org/schema/mule/core/set-payload" entity-id="Set Payload#1">
+                            <graphicalData x="0" y="0" width="0" height="0"/>
+                            <properties>
+<property name="value" value="#[payload.studentSubscriptionList]"/>
+<property name="auxiliary;index" value="32"/>
+                            </properties>
+                        </pattern>
+                        <pattern name="Logger" type="http://www.mulesoft.org/schema/mule/core/logger" entity-id="Logger#2">
+                            <graphicalData x="0" y="0" width="0" height="0"/>
+                            <properties>
+<property name="message" value="#[payload]"/>
+<property name="category"/>
+<property name="level" value="INFO"/>
+<property name="auxiliary;index" value="33"/>
+                            </properties>
+                        </pattern>
+                        <pattern name="Collection Splitter" type="http://www.mulesoft.org/schema/mule/core/collection-splitter" entity-id="Collection Splitter#1">
+                            <graphicalData x="0" y="0" width="0" height="0"/>
+                            <properties>
+<property name="businessEventsLabel"/>
+<property name="enableCorrelation"/>
+<property name="auxiliary;index" value="34"/>
+<property name="tracking:enable-default-events"/>
+                            </properties>
+                        </pattern>
+                        <pattern name="Logger" type="http://www.mulesoft.org/schema/mule/core/logger" entity-id="Logger#3">
+                            <graphicalData x="0" y="0" width="0" height="0"/>
+                            <properties>
+<property name="message" value="#[payload]"/>
+<property name="category"/>
+<property name="level" value="INFO"/>
+<property name="auxiliary;index" value="35"/>
+                            </properties>
+                        </pattern>
+                        <endpoint direction="Outbound" message-exchange-pattern="OneWay" name="SMTP" type="http://www.mulesoft.org/schema/mule/smtps/endpoint" entity-id="SMTP#1">
+                            <graphicalData x="0" y="0" width="0" height="0"/>
+                            <properties>
+<property name="port"/>
+<property name="to" value="frank@stmatthews.com"/>
+<property name="host" value="localhost"/>
+<property name="businessEventsLabel"/>
+<property name="subject" value="Class Alert!"/>
+<property name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute" value="http://www.mulesoft.org/schema/mule/smtp/endpoint"/>
+<property name="bcc"/>
+<property name="from" value="maggie@stmatthews.com"/>
+<property name="disableTransportTransformer"/>
+<property name="password" value="maggiemaggie"/>
+<property name="tracking:enable-default-events"/>
+<property name="exchange-pattern" value="one-way"/>
+<property name="ref"/>
+<property name="transformer-refs"/>
+<property name="replyTo"/>
+<property name="address"/>
+<property name="encoding"/>
+<property name="user" value="maggie"/>
+<property name="auxiliary;index" value="36"/>
+<property name="mimeType"/>
+<property name="responseTimeout" value="10000"/>
+<property name="cc"/>
+<property name="connector-ref"/>
+                            </properties>
+                        </endpoint>
+                    </lane>
+                </compartment>
+            </scope>
         </lane>
-        <apikit>false</apikit>
     </flow>
     <description></description>
 </mule-configuration>
